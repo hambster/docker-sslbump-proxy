@@ -9,11 +9,29 @@ mkdir -p $C_ICAP_DIR/var/log
 mkdir -p $C_ICAP_DIR/var/run/c-icap
 useradd $C_ICAP_USER -U -b $C_ICAP_DIR
 chown -R ${C_ICAP_USER}:${C_ICAP_USER} $C_ICAP_DIR
+
+# ------ /usr/local/etc/urls.txt ----------------
+
+echo 'www.facebook.com/' >> $C_ICAP_DIR/etc/urls.txt
+echo 'tw.yahoo.com/' >> $C_ICAP_DIR/etc/urls.txt
+
+# ------ /usr/local/etc/srv_url_check.conf ---------
+#echo '%{url_check:action_cat}Sa] [Action: %{url_check:action}Sa]"' >> $C_ICAP_DIR/etc/srv_url_check.conf
+#echo 'Service url_check_module srv_url_check.so' >> $C_ICAP_DIR/etc/srv_url_check.conf
+echo "url_check.LookupTableDB urls url hash:$C_ICAP_DIR/etc/urls.txt" >> $C_ICAP_DIR/etc/srv_url_check.conf
+#echo 'url_check.Profile social_media block urls' >> $C_ICAP_DIR/etc/srv_url_check.conf
+echo 'url_check.Profile default block ALL' >> $C_ICAP_DIR/etc/srv_url_check.conf
+#echo 'url_check.Profile default pass ALL' >> $C_ICAP_DIR/etc/srv_url_check.conf
+#echo 'url_check.ProfileAccess social_media facebook' >> $C_ICAP_DIR/etc/srv_url_check.conf
+
+# ------- $C_ICAP_DIR/etc/c-icap.conf ----------
 echo "#===added config===" >> $C_ICAP_DIR/etc/c-icap.conf
 echo "User $C_ICAP_USER" >> $C_ICAP_DIR/etc/c-icap.conf
 echo "Group $C_ICAP_USER" >> $C_ICAP_DIR/etc/c-icap.conf
 echo "PidFile $C_ICAP_DIR/var/run/c-icap/c-icap.pid" >> $C_ICAP_DIR/etc/c-icap.conf
 echo "CommandsSocket $C_ICAP_DIR/var/run/c-icap/c-icap.ctl" >> $C_ICAP_DIR/etc/c-icap.conf
+#echo "Service echo srv_echo.so" >> $C_ICAP_DIR/etc/c-icap.conf
+echo "Include srv_url_check.conf" >> $C_ICAP_DIR/etc/c-icap.conf
 #echo "Service xss srv_xss.so" >> $C_ICAP_DIR/etc/c-icap.conf
 cat $C_ICAP_DIR/etc/c-icap.conf | grep added\ config -A1000 #fflush()
 echo "#===added config==="
@@ -51,14 +69,16 @@ echo "icap_206_enable on" >> $SQUID_DIR/etc/squid.conf
 echo "icap_persistent_connections on" >> $SQUID_DIR/etc/squid.conf
 echo "adaptation_send_client_ip off" >> $SQUID_DIR/etc/squid.conf
 echo "adaptation_send_username off" >> $SQUID_DIR/etc/squid.conf
-echo "icap_service srv_echo_req reqmod_precache icap://127.0.0.1:1344/echo"  >> $SQUID_DIR/etc/squid.conf
-echo "icap_service srv_echo_resp respmod_precache icap://127.0.0.1:1344/echo" >> $SQUID_DIR/etc/squid.conf
+echo "icap_service svcBlocker reqmod_precache icap://127.0.0.1:1344/url_check bypass=off"  >> $SQUID_DIR/etc/squid.conf
+echo "adaptation_access svcBlocker allow all" >> $SQUID_DIR/etc/squid.conf
+#echo "icap_service srv_echo_req reqmod_precache icap://127.0.0.1:1344/echo"  >> $SQUID_DIR/etc/squid.conf
+#echo "icap_service srv_echo_resp respmod_precache icap://127.0.0.1:1344/echo" >> $SQUID_DIR/etc/squid.conf
 #echo "adaptation_service_set svc_echo_req_set srv_echo_req" >> $SQUID_DIR/etc/squid.conf
 #echo "adaptation_service_set svc_echo_resp_set srv_echo_resp">> $SQUID_DIR/etc/squid.conf
-echo "adaptation_service_chain svc_echo_req_chain srv_echo_req" >> $SQUID_DIR/etc/squid.conf
-echo "adaptation_service_chain svc_echo_resp_chain srv_echo_resp">> $SQUID_DIR/etc/squid.conf
-echo "adaptation_access svc_echo_req_chain allow all">> $SQUID_DIR/etc/squid.conf
-echo "adaptation_access svc_echo_resp_chain allow all">> $SQUID_DIR/etc/squid.conf
+#echo "adaptation_service_chain svc_echo_req_chain srv_echo_req" >> $SQUID_DIR/etc/squid.conf
+#echo "adaptation_service_chain svc_echo_resp_chain srv_echo_resp">> $SQUID_DIR/etc/squid.conf
+#echo "adaptation_access svc_echo_req_chain allow all">> $SQUID_DIR/etc/squid.conf
+#echo "adaptation_access svc_echo_resp_chain allow all">> $SQUID_DIR/etc/squid.conf
 cat $SQUID_DIR/etc/squid.conf | grep added\ config -A1000 #fflush()
 echo "#===added config==="
 $SQUID_DIR/sbin/squid -d 10 -f $SQUID_DIR/etc/squid.conf

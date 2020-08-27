@@ -24,6 +24,14 @@ RUN wget https://downloads.sourceforge.net/project/c-icap/c-icap/0.5.x/c_icap-0.
     make -j4 && \
     make install
 
+# c-icap 0.5.4 modules
+RUN wget https://downloads.sourceforge.net/project/c-icap/c-icap-modules/0.5.x/c_icap_modules-0.5.4.tar.gz && \
+    tar xzvf c_icap_modules-0.5.4.tar.gz && \
+    cd c_icap_modules-0.5.4 && \
+    ./configure --with-c-icap=$C_ICAP_DIR --prefix=$C_ICAP_DIR && \
+    make -j4 && \
+    make install
+
 EXPOSE 3128
 
 ADD ./entrypoint.sh /entrypoint.sh
